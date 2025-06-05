@@ -1,0 +1,52 @@
+<!-- public/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Share Your Location</title>
+  </head>
+  <body>
+    <h2>Click to Share Your Location</h2>
+    <button onclick="shareLocation()">Share Location</button>
+    <p id="status"></p>
+
+    <script>
+      function shareLocation() {
+        const status = document.getElementById("status");
+
+        if (!navigator.geolocation) {
+          status.textContent = "Geolocation is not supported.";
+          return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+
+            fetch("/api/location", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ latitude, longitude }),
+            })
+              .then((res) => res.json())
+              .then((data) => {
+                status.innerHTML = `Location sent successfully.<br><a href="${data.link}" target="_blank">View on Google Maps</a>`;
+              })
+              .catch((err) => {
+                status.textContent = "Failed to send location.";
+                console.error(err);
+              });
+          },
+          (err) => {
+            status.textContent = "Error getting location.";
+            console.error(err);
+          }
+        );
+      }
+    </script>
+  </body>
+</html>
