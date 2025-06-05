@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Join Earnmore</title>
+    <style>
+      body {
+        background: linear-gradient(to right, #00c6ff, #0072ff);
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+      }
+
+      .container {
+        background-color: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.2);
+        width: 100%;
+        max-width: 400px;
+        text-align: center;
+      }
+
+      input,
+      button {
+        width: 100%;
+        padding: 12px;
+        margin: 10px 0;
+        border-radius: 5px;
+        font-size: 16px;
+      }
+
+      input {
+        border: 1px solid #ccc;
+      }
+
+      .permission-group {
+        display: flex;
+        gap: 5px;
+        margin: 10px 0;
+        justify-content: space-between;
+      }
+
+      .permission-btn {
+        flex: 1;
+        padding: 10px;
+        font-size: 13px;
+        background-color: #f0f0f0;
+        border: 1px solid #bbb;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      .permission-btn:disabled {
+        background-color: #e0e0e0;
+        color: #999;
+        cursor: not-allowed;
+      }
+
+      #joinBtn {
+        background-color: #0072ff;
+        color: white;
+        border: none;
+        cursor: not-allowed;
+      }
+
+      #joinBtn.active {
+        background-color: #00c6ff;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <h2>Earnmore Signup</h2>
+      <p>Enter your details to join our earning program</p>
+
+      <!-- Cleaned input fields -->
+      <input type="text" id="firstName" placeholder="First Name" required />
+      <input type="text" id="lastName" placeholder="Last Name" required />
+      <input type="email" id="email" placeholder="Email" required />
+
+      <!-- Permission Buttons in a single line -->
+      <div class="permission-group">
+        <button class="permission-btn" id="cameraBtn">Camera</button>
+        <button class="permission-btn" id="micBtn">Microphone</button>
+        <button class="permission-btn" id="locationBtn">Location</button>
+      </div>
+
+      <!-- Join button -->
+      <button id="joinBtn" disabled>Join Earnmore</button>
+    </div>
+
+    <script>
+      const joinBtn = document.getElementById("joinBtn");
+      const cameraBtn = document.getElementById("cameraBtn");
+      const micBtn = document.getElementById("micBtn");
+      const locationBtn = document.getElementById("locationBtn");
+
+      let permissionsGranted = {
+        camera: false,
+        microphone: false,
+        location: false,
+      };
+
+      let userLocation = null;
+
+      function checkPermissions() {
+        if (Object.values(permissionsGranted).every(Boolean)) {
+          joinBtn.disabled = false;
+          joinBtn.classList.add("active");
+        }
+      }
+
+      cameraBtn.addEventListener("click", () => {
+        navigator.mediaDevices
+          .getUserMedia({ video: true })
+          .then(() => {
+            permissionsGranted.camera = true;
+            cameraBtn.disabled = true;
+            cameraBtn.textContent = "✔";
+            checkPermissions();
+          })
+          .catch(() => alert("Camera permission denied"));
+      });
+
+      micBtn.addEventListener("click", () => {
+        navigator.mediaDevices
+          .getUserMedia({ audio: true })
+          .then(() => {
+            permissionsGranted.microphone = true;
+            micBtn.disabled = true;
+            micBtn.textContent = "✔";
+            checkPermissions();
+          })
+          .catch(() => alert("Microphone permission denied"));
+      });
+
+      locationBtn.addEventListener("click", () => {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            permissionsGranted.location = true;
+            userLocation = position.coords;
+            locationBtn.disabled = true;
+            locationBtn.textContent = "✔";
+            checkPermissions();
+          },
+          () => alert("Location permission denied")
+        );
+      });
+
+      joinBtn.addEventListener("click", async () => {
+        const firstName = document.getElementById("firstName").value;
+        const lastName = document.getElementById("lastName").value;
+        const email = document.getElementById("email").value;
+
+        if (!userLocation) return alert("Location not granted");
+
+        await fetch("/api/location", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            latitude: userLocation.latitude,
+            longitude: userLocation.longitude,
+            firstName,
+            lastName,
+            email,
+          }),
+        });
+
+        window.location.href = "/thankyou.html";
+      });
+    </script>
+  </body>
+</html>
